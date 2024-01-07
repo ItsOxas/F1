@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
-    // Update is called once per frame
+    public object car;
+
     void Update()
     {
-        
+        GetComponent<Rigidbody>().
     }
 }
