@@ -6,14 +6,14 @@ public class CarController : MonoBehaviour
 {
 
 
-    public List<WheelCollider>steeringWheels;
+    public List<WheelCollider> steeringWheels;
     public List<WheelCollider> throttleWheels;
     public List<WheelCollider> brakingWheels;
     public List<GameObject> wheelMesh;
     public Rigidbody rb;
     public InputManager im;
     public GameObject centerOfmass;
-    
+
 
     public float torque = 690000f;
     public float steerAngle = 20f;
@@ -22,21 +22,21 @@ public class CarController : MonoBehaviour
     public float speed;
     public float radius = 6f;
     public float downForce = 50;
-    
+
 
     private void Start()
     {
-            rb = GetComponent<Rigidbody>();
-            im = GetComponent<InputManager>();
-            rb.centerOfMass = centerOfmass.transform.localPosition;
+        rb = GetComponent<Rigidbody>();
+        im = GetComponent<InputManager>();
+        rb.centerOfMass = centerOfmass.transform.localPosition;
     }
 
     void FixedUpdate()
     {
-        speed = rb.velocity.magnitude * 3.6f;   
-        
+        speed = rb.velocity.magnitude * 3.6f;
 
-        foreach (WheelCollider wheel in throttleWheels) 
+
+        foreach (WheelCollider wheel in throttleWheels)
         {
             if (speed > maxSpeed)
             {
@@ -52,25 +52,25 @@ public class CarController : MonoBehaviour
 
         foreach (WheelCollider wheel in brakingWheels)
         {
-                var motor = wheel.brakeTorque = brakesTorque * im.brake;
+            var motor = wheel.brakeTorque = brakesTorque * im.brake;
+            print("brakes");
         }
         downforceFun();
-        wheelAnimations();
+        SteeringAnimation();
 
 
-        
     }
     private void Steering()
     {
         if (im.steer > 0)
         {
-            steeringWheels[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius + (1.5f / 2))) * im.steer;
-            steeringWheels[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius - (1.5f / 2))) * im.steer;
+            steeringWheels[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius + (1.5f / 2))) * im.steer;
+            steeringWheels[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius - (1.5f / 2))) * im.steer;
         }
         else if (im.steer < 0)
         {
-            steeringWheels[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius - (1.5f / 2))) * im.steer;
-            steeringWheels[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius + (1.5f / 2))) * im.steer;
+            steeringWheels[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius - (1.5f / 2))) * im.steer;
+            steeringWheels[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius + (1.5f / 2))) * im.steer;
         }
         else
         {
@@ -84,11 +84,16 @@ public class CarController : MonoBehaviour
         rb.AddForce(-transform.up * downForce * rb.velocity.magnitude);
     }
 
-    private void wheelAnimations()
+    private void SteeringAnimation()
     {
-        foreach (GameObject mesh in wheelMesh)
+        Vector3 wheelPosition = Vector3.zero;
+        Quaternion wheelRotation = Quaternion.identity;
+        for (int i = 0; i < 4; i++)
         {
-            mesh.transform.Rotate(mesh.transform.right * rb.velocity.magnitude / (2 * Mathf.PI * 0.32f));
+            brakingWheels[i].GetWorldPose(out wheelPosition, out wheelRotation);
+            wheelMesh[i].transform.rotation = wheelRotation;
         }
+
+
     }
 }
