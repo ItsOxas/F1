@@ -4,14 +4,15 @@ using UnityEngine;
 
 public class CarController : MonoBehaviour
 {
-    public float throttle;
-    public float steer;
-    public float brake;
+
 
     public List<WheelCollider>steeringWheels;
     public List<WheelCollider> throttleWheels;
-    public List<WheelCollider> breakingWheels;
+    public List<WheelCollider> brakingWheels;
+    public List<GameObject> wheelMesh;
     public Rigidbody rb;
+    public InputManager im;
+    public GameObject centerOfmass;
     
 
     public float torque = 690000f;
@@ -19,18 +20,20 @@ public class CarController : MonoBehaviour
     public float brakesTorque = 9000f;
     public float maxSpeed = 360;
     public float speed;
+    public float radius = 6f;
+    public float downForce = 50;
+    
 
     private void Start()
     {
             rb = GetComponent<Rigidbody>();
+            im = GetComponent<InputManager>();
+            rb.centerOfMass = centerOfmass.transform.localPosition;
     }
 
     void FixedUpdate()
     {
-        speed = rb.velocity.magnitude * 3.6f;
-        throttle = Input.GetAxis("Vertical");
-        steer = Input.GetAxis("Horizontal");
-        brake = Input.GetAxis("Brake");
+        speed = rb.velocity.magnitude * 3.6f;   
         
 
         foreach (WheelCollider wheel in throttleWheels) 
@@ -41,30 +44,51 @@ public class CarController : MonoBehaviour
             }
             else
             {
-                var motor = wheel.motorTorque = torque * Time.deltaTime * throttle * 60;
+                var motor = wheel.motorTorque = torque * im.throttle;
                 rb.AddForce(transform.forward * motor);
             }
         }
-        foreach (WheelCollider wheel in steeringWheels)
+        Steering();
+
+        foreach (WheelCollider wheel in brakingWheels)
         {
-            wheel.GetComponent<WheelCollider>().steerAngle = 20f * steer;
-            wheel.transform.localEulerAngles = new Vector3(0, steer * steerAngle,0);
+                var motor = wheel.brakeTorque = brakesTorque * im.brake;
         }
+        downforceFun();
+        wheelAnimations();
+
 
         
-
-        foreach (WheelCollider wheel in breakingWheels)
+    }
+    private void Steering()
+    {
+        if (im.steer > 0)
         {
-            if (speed >= 20)
-            {
-                var motor = wheel.brakeTorque = brakesTorque * Time.deltaTime * brake * 60;
-                rb.AddForce(-transform.forward * motor);
-            }
-            else
-            {
-                var motor = wheel.brakeTorque = brakesTorque * Time.deltaTime * brake * 60;
-            }
+            steeringWheels[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius + (1.5f / 2))) * im.steer;
+            steeringWheels[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius - (1.5f / 2))) * im.steer;
         }
-        
+        else if (im.steer < 0)
+        {
+            steeringWheels[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius - (1.5f / 2))) * im.steer;
+            steeringWheels[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(2.55f / (radius + (1.5f / 2))) * im.steer;
+        }
+        else
+        {
+            steeringWheels[0].steerAngle = 0;
+            steeringWheels[1].steerAngle = 0;
+        }
+    }
+
+    private void downforceFun()
+    {
+        rb.AddForce(-transform.up * downForce * rb.velocity.magnitude);
+    }
+
+    private void wheelAnimations()
+    {
+        foreach (GameObject mesh in wheelMesh)
+        {
+            mesh.transform.Rotate(mesh.transform.right * rb.velocity.magnitude / (2 * Mathf.PI * 0.32f));
+        }
     }
 }

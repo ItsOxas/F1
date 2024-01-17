@@ -6,10 +6,12 @@ public class InputManager : MonoBehaviour
 {
     public float throttle;
     public float steer;
+    public float brake;
 
     void Update()
     {
         throttle = Input.GetAxis("Vertical");
         steer = Input.GetAxis("Horizontal");
+        brake = Input.GetAxis("Brake");
     }
 }
